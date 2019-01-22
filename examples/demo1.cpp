@@ -1,5 +1,5 @@
 
-#include "../include/dict.hpp"
+#include "dict.hpp"
 
 #include <string>
 #include <iostream>
