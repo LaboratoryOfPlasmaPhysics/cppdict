@@ -13,6 +13,8 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <sstream>
+#include <utility>
 
 namespace cppdict
 {
@@ -111,6 +113,40 @@ struct Dict
         }
     }
 };
+
+
+
+template <typename... Types>
+auto& get(std::vector<std::string> keys, int iKey, Dict<Types...>& currentNode)
+{
+    if (iKey == keys.size() - 1)
+    {
+        return currentNode[keys[iKey]];
+    }
+    else
+    {
+        return get(keys, iKey + 1, currentNode[keys[iKey]]);
+    }
+}
+
+
+
+
+template<typename T, template<typename... Types> class Dict, typename... Types, typename Check = std::enable_if_t<is_in<T, Types...>()>>
+void add(std::string path, T&& value, Dict<Types...>& dict)
+{
+    std::vector<std::string> keys;
+    std::string key;
+    std::istringstream tokenStream{path};
+    while (std::getline(tokenStream, key, '/'))
+    {
+        keys.push_back(key);
+    }
+
+    auto&& node = get(keys, 0, dict);
+    node        = std::forward<T>(value);
+}
+
 
 
 } // namespace cppdict
