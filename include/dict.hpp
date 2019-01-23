@@ -1,31 +1,34 @@
-#include <iostream>
+#ifndef DICT_H
+#define DICT_H
+
 #include <algorithm>
-#include <string>
 #include <array>
-#include <type_traits>
-#include <utility>
-#include <typeinfo>
-#include <vector>
-#include <variant>
+#include <functional>
+#include <iostream>
 #include <map>
 #include <memory>
-#include <functional>
+#include <string>
+#include <type_traits>
+#include <typeinfo>
+#include <utility>
+#include <variant>
+#include <vector>
 
 namespace cppdict
 {
-
-
-template <typename T1, typename... T2>
+template<typename T1, typename... T2>
 constexpr bool is_in()
 {
     return std::disjunction_v<std::is_same<T1, T2>...>;
 }
 
 
-struct NoValue{};
+struct NoValue
+{
+};
 
 
-template <typename... Types>
+template<typename... Types>
 struct Dict
 {
     using node_ptr = std::unique_ptr<Dict>;
@@ -36,23 +39,23 @@ struct Dict
 
     Dict& operator[](const std::string& key)
     {
-        if(std::holds_alternative<map_t>(data))
+        if (std::holds_alternative<map_t>(data))
         {
-            std::cout << key << "\n";
+            // std::cout << key << "\n";
             auto& map = std::get<map_t>(data);
 
-            if(std::end(map)==map.find(key))
+            if (std::end(map) == map.find(key))
             {
-                map[key]= std::make_unique<Dict>();
+                map[key] = std::make_unique<Dict>();
             }
 
             return *std::get<map_t>(data)[key];
         }
         else if (std::holds_alternative<NoValue>(data))
         {
-            data = map_t{};
+            data      = map_t{};
             auto& map = std::get<map_t>(data);
-            map[key]= std::make_unique<Dict>();
+            map[key]  = std::make_unique<Dict>();
 
             return *std::get<map_t>(data)[key];
         }
@@ -62,6 +65,14 @@ struct Dict
             throw std::runtime_error("invalid key");
         }
     }
+
+
+    bool isFinal() const
+    {
+        return !std::holds_alternative<map_t>(data) && !std::holds_alternative<NoValue>(data);
+    }
+
+
 
     template<typename T, typename U = std::enable_if_t<is_in<T, Types...>()>>
     Dict& operator=(const T& value)
@@ -90,7 +101,7 @@ struct Dict
         {
             return std::get<T>(data);
         }
-        else if( std::holds_alternative<NoValue>(data))
+        else if (std::holds_alternative<NoValue>(data))
         {
             return defaultValue;
         }
@@ -99,8 +110,8 @@ struct Dict
             throw std::runtime_error("not a map or not default");
         }
     }
-
 };
 
 
-}
+} // namespace cppdict
+#endif
