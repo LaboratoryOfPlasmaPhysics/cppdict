@@ -57,7 +57,7 @@ struct Dict
         {
             data      = map_t{};
             auto& map = std::get<map_t>(data);
-            map[key]  = std::make_sharedDict>();
+            map[key]  = std::make_shared<Dict>();
 
             return *std::get<map_t>(data)[key];
         }
