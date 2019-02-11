@@ -48,7 +48,7 @@ struct Dict
 
             if (std::end(map) == map.find(key))
             {
-                map[key] = std::make_unique<Dict>();
+                map[key] = std::make_shared<Dict>();
             }
 
             return *std::get<map_t>(data)[key];
@@ -57,7 +57,7 @@ struct Dict
         {
             data      = map_t{};
             auto& map = std::get<map_t>(data);
-            map[key]  = std::make_unique<Dict>();
+            map[key]  = std::make_sharedDict>();
 
             return *std::get<map_t>(data)[key];
         }
