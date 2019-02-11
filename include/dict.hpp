@@ -33,7 +33,7 @@ struct NoValue
 template<typename... Types>
 struct Dict
 {
-    using node_ptr = std::unique_ptr<Dict>;
+    using node_ptr = std::shared_ptr<Dict>;
     using map_t    = std::map<std::string, node_ptr>;
     using data_t   = std::variant<NoValue, map_t, Types...>;
 
