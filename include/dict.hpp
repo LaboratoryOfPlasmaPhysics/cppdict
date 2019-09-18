@@ -117,7 +117,7 @@ struct Dict
 
 
 template <typename... Types>
-auto& get(std::vector<std::string> keys, int iKey, Dict<Types...>& currentNode)
+auto& get(std::vector<std::string> keys, size_t iKey, Dict<Types...>& currentNode)
 {
     if (iKey == keys.size() - 1)
     {
@@ -143,7 +143,7 @@ void add(std::string path, T&& value, Dict<Types...>& dict)
         keys.push_back(key);
     }
 
-    auto&& node = get(keys, 0, dict);
+    auto&& node = get(keys, 0ul, dict);
     node        = std::forward<T>(value);
 }
 
