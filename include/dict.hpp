@@ -67,7 +67,7 @@ struct Dict
             return *std::get<map_t>(data)[key];
         }
 
-        throw std::runtime_error("invalid key: " + key);
+        throw std::runtime_error("cppdict: invalid key: " + key);
     }
 
 
@@ -94,7 +94,7 @@ struct Dict
 #ifndef NDEBUG
         std::cout << __FILE__ << " " << __LINE__ << " " << currentKey << std::endl;
 #endif
-        throw std::runtime_error("to<T> invalid type");
+        throw std::runtime_error("cppdict: to<T> invalid type");
     }
 
     template<typename T>
@@ -112,7 +112,19 @@ struct Dict
 #ifndef NDEBUG
         std::cout << __FILE__ << " " << __LINE__ << " " << currentKey << std::endl;
 #endif
-        throw std::runtime_error("not a map or not default");
+        throw std::runtime_error("cppdict: not a map or not default");
+    }
+
+    bool contains(std::string key)
+    {
+        if (std::holds_alternative<map_t>(data))
+            return std::get<map_t>(data).count(key) > 0;
+
+#ifndef NDEBUG
+        std::cout << __FILE__ << " " << __LINE__ << " " << currentKey << std::endl;
+#endif
+
+        throw std::runtime_error("cppdict: contains() has no a map");
     }
 };
 
