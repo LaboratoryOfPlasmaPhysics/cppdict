@@ -7,14 +7,13 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <type_traits>
 #include <typeinfo>
 #include <utility>
 #include <variant>
 #include <vector>
-#include <sstream>
-#include <utility>
 
 namespace cppdict
 {
@@ -38,9 +37,15 @@ struct Dict
     using data_t   = std::variant<NoValue, map_t, Types...>;
 
     data_t data = NoValue{};
+#ifndef NDEBUG
+    static inline std::string currentKey;
+#endif
 
     Dict& operator[](const std::string& key)
     {
+#ifndef NDEBUG
+        currentKey = key;
+#endif
         if (std::holds_alternative<map_t>(data))
         {
             // std::cout << key << "\n";
@@ -62,10 +67,7 @@ struct Dict
             return *std::get<map_t>(data)[key];
         }
 
-        else
-        {
-            throw std::runtime_error("invalid key");
-        }
+        throw std::runtime_error("cppdict: invalid key: " + key);
     }
 
 
@@ -87,13 +89,12 @@ struct Dict
     T& to()
     {
         if (std::holds_alternative<T>(data))
-        {
             return std::get<T>(data);
-        }
-        else
-        {
-            throw std::runtime_error("invalid type");
-        }
+
+#ifndef NDEBUG
+        std::cout << __FILE__ << " " << __LINE__ << " " << currentKey << std::endl;
+#endif
+        throw std::runtime_error("cppdict: to<T> invalid type");
     }
 
     template<typename T>
@@ -107,32 +108,42 @@ struct Dict
         {
             return defaultValue;
         }
-        else
-        {
-            throw std::runtime_error("not a map or not default");
-        }
+
+#ifndef NDEBUG
+        std::cout << __FILE__ << " " << __LINE__ << " " << currentKey << std::endl;
+#endif
+        throw std::runtime_error("cppdict: not a map or not default");
+    }
+
+    bool contains(std::string key)
+    {
+        if (std::holds_alternative<map_t>(data))
+            return std::get<map_t>(data).count(key) > 0;
+
+#ifndef NDEBUG
+        std::cout << __FILE__ << " " << __LINE__ << " " << currentKey << std::endl;
+#endif
+
+        throw std::runtime_error("cppdict: contains() has no a map");
     }
 };
 
 
 
-template <typename... Types>
+template<typename... Types>
 auto& get(std::vector<std::string> keys, size_t iKey, Dict<Types...>& currentNode)
 {
     if (iKey == keys.size() - 1)
-    {
         return currentNode[keys[iKey]];
-    }
-    else
-    {
-        return get(keys, iKey + 1, currentNode[keys[iKey]]);
-    }
+
+    return get(keys, iKey + 1, currentNode[keys[iKey]]);
 }
 
 
 
 
-template<typename T, template<typename... Types> class Dict, typename... Types, typename Check = std::enable_if_t<is_in<T, Types...>()>>
+template<typename T, template<typename... Types> class Dict, typename... Types,
+         typename Check = std::enable_if_t<is_in<T, Types...>()>>
 void add(std::string path, T&& value, Dict<Types...>& dict)
 {
     std::vector<std::string> keys;
