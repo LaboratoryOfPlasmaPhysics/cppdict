@@ -28,6 +28,23 @@ struct NoValue
 {
 };
 
+namespace
+{
+    template <typename... Ts>
+    struct Visitor : Ts...
+    {
+        Visitor(const Ts&... args) : Ts(args)... {}
+
+        using Ts::operator()...;
+    };
+
+    template <typename... Ts>
+    auto make_visitor(Ts... lambdas)
+    {
+        return Visitor<Ts...>(lambdas...);
+    }
+}
+
 template<typename... Types>
 struct Dict
 {
@@ -184,6 +201,20 @@ struct Dict
         else
             throw std::runtime_error("cppdict: can't iterate this node");
     }
+
+    template <typename... Ts>
+    void visit(Ts... lambdas)
+    {
+        if(isNode())
+            for(const auto& [key,node]:std::get<map_t>(data))
+            {
+                std::visit([key, lambdas...](auto &&value){make_visitor(lambdas...)(key,value);}, node->data);
+            }
+        else
+            throw std::runtime_error("cppdict: can only visit node");
+
+    }
+
 private:
     void copy_data_()
     {
