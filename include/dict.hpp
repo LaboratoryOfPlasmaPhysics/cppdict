@@ -136,6 +136,15 @@ struct Dict
         throw std::runtime_error("cppdict: contains() has no a map");
     }
 
+    std::size_t size()const noexcept
+    {
+        if(std::holds_alternative<map_t>(data))
+            return std::size(std::get<map_t>(data));
+        if(std::holds_alternative<NoValue>(data))
+            return 0;
+        return 1;
+    }
+
 private:
     void copy_data_()
     {
