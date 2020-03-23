@@ -50,18 +50,59 @@ TEST_CASE("Visit node's children", "[cppdict::Dict<int, double, std::string> stl
     dict["first"] = 3.14;
     dict["second"] = 1;
     dict["third"]["level2"] = std::string{"hello"};
-    auto node_count=0UL;
-    auto int_count=0UL;
-    auto double_count=0UL;
-    auto string_count=0UL;
-    dict.visit(
-        [&node_count](const std::string&, const auto& ){node_count++;},
-        [&double_count](const std::string&, double){double_count++;},
-        [&int_count](const std::string&, int){int_count++;},
-        [&string_count](const std::string&, const std::string& ){string_count++;}
-        );
-    REQUIRE(node_count==1UL);
-    REQUIRE(int_count==1UL);
-    REQUIRE(double_count==1UL);
-    REQUIRE(string_count==0UL);
+    SECTION("Can visit in read only mode")
+    {
+        auto node_count=0UL;
+        auto int_count=0UL;
+        auto double_count=0UL;
+        auto string_count=0UL;
+        dict.visit(
+            [&node_count](const std::string&, const auto& ){node_count++;},
+            [&double_count](const std::string&, double){double_count++;},
+            [&int_count](const std::string&, int){int_count++;},
+            [&string_count](const std::string&, const std::string& ){string_count++;}
+            );
+        REQUIRE(node_count==1UL);
+        REQUIRE(int_count==1UL);
+        REQUIRE(double_count==1UL);
+        REQUIRE(string_count==0UL);
+    }
+    SECTION("Visitor can modify values")
+    {
+        dict.visit(
+            [](const std::string&, const auto& ){},
+            [](const std::string&, double){},
+            [](const std::string&, int& value){value=42;},
+            [](const std::string&, const std::string& ){} );
+        REQUIRE(dict["second"].to<int>() == 42);
+    }
+
+}
+
+TEST_CASE("Visit leaves", "[cppdict::Dict<int, double, std::string> stl_compat>]")
+{
+    Dict dict;
+    dict["first"] = 3.14;
+    dict["second"] = 1;
+    dict["third"]["level2"] = std::string{"hello"};
+    dict["third"]["level2_2"] = .2;
+    dict["third"]["level2_3"] = 55;
+    dict["third"]["level2_4"]["level3"] = 33;
+    SECTION("Can visit in read only mode")
+    {
+        auto node_count=0UL;
+        auto int_count=0UL;
+        auto double_count=0UL;
+        auto string_count=0UL;
+        dict.visit_leaves(
+            [&node_count](const std::string&, const auto& ){node_count++;},
+            [&double_count](const std::string&, double){double_count++;},
+            [&int_count](const std::string&, int){int_count++;},
+            [&string_count](const std::string&, const std::string& ){string_count++;}
+            );
+        REQUIRE(node_count==0UL);
+        REQUIRE(int_count==3UL);
+        REQUIRE(double_count==2UL);
+        REQUIRE(string_count==1UL);
+    }
 }

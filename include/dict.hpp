@@ -212,6 +212,25 @@ struct Dict
             }
         else
             throw std::runtime_error("cppdict: can only visit node");
+    }
+
+    template <typename... Ts>
+    void visit_leaves(Ts... lambdas)
+    {
+        if(isNode())
+            for(const auto& [key,node]:std::get<map_t>(data))
+            {
+                if(node->isNode())
+                {
+                    node->visit_leaves(std::forward<Ts>(lambdas)...);
+                }
+                else if(node->isLeaf())
+                {
+                    std::visit([key, lambdas...](auto &&value){make_visitor(lambdas...)(key,value);}, node->data);
+                }
+            }
+        else
+            throw std::runtime_error("cppdict: can only visit node");
 
     }
 
