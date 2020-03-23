@@ -36,6 +36,9 @@ TEST_CASE("Deals with both references and values", "[simple cppdict::Dict<int, d
 {
     Dict dict;
     dict["0"]["1"] = 3.5;
+    dict["0"]["2"]["1"] = 55.;
+    dict["0"]["2"]["2"] = 56.;
+    dict["0"]["2"]["3"]["1"]["1"] = 666.;
     SECTION("Values acces by value does a copy")
     {
         auto v = dict["0"]["1"].to<double>();
@@ -48,11 +51,22 @@ TEST_CASE("Deals with both references and values", "[simple cppdict::Dict<int, d
         v = 10.;
         REQUIRE(v==dict["0"]["1"].to<double>());
     }
-    SECTION("Nodes access by value doesn't copy")
+    SECTION("Nodes access by value does copy")
     {
         auto node = dict["0"];
         node["1"] = 100;
         REQUIRE(dict["0"]["1"].to<double>()==3.5);
+        node = dict["2"];
+        node["3"]["1"]["1"] = 42;
+        REQUIRE(dict["0"]["2"]["3"]["1"]["1"].to<double>()==666.);
+    }
+    SECTION("Nodes access by ref doesn't copy")
+    {
+        auto &node = dict["0"];
+        node["1"] = 100;
+        node["2"]["3"]["1"]["1"] = 42;
+        REQUIRE(dict["0"]["1"].to<int>()==100);
+        REQUIRE(dict["0"]["2"]["3"]["1"]["1"].to<int>()==42);
     }
 
 }

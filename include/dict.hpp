@@ -28,7 +28,6 @@ struct NoValue
 {
 };
 
-
 template<typename... Types>
 struct Dict
 {
@@ -41,21 +40,16 @@ struct Dict
     static inline std::string currentKey;
 #endif
 
-    Dict() = default;
+    Dict()       = default;
     Dict(Dict&&) = default;
     Dict(const Dict& other)
-        :data{other.data}
+        : data{other.data}
     {
-        if(std::holds_alternative<map_t>(data))
-        {
-            auto & my_data = std::get<map_t>(data);
-            for( const auto& [key,value]:my_data)
-            {
-                my_data[key] = std::make_shared<Dict>(*value.get());
-            }
-        }
+        this->copy_data_();
     }
 
+    Dict& operator=(const Dict& other) { this->copy_data_(); }
+    Dict& operator=(Dict&& other) = default;
     Dict& operator[](const std::string& key)
     {
 #ifndef NDEBUG
@@ -140,6 +134,19 @@ struct Dict
 #endif
 
         throw std::runtime_error("cppdict: contains() has no a map");
+    }
+
+private:
+    void copy_data_()
+    {
+        if (std::holds_alternative<map_t>(data))
+        {
+            auto& my_data = std::get<map_t>(data);
+            for (const auto& [key, value] : my_data)
+            {
+                my_data[key] = std::make_shared<Dict>(*value.get());
+            }
+        }
     }
 };
 
