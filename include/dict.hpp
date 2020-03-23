@@ -55,7 +55,7 @@ struct Dict
 #ifndef NDEBUG
         currentKey = key;
 #endif
-        if (std::holds_alternative<map_t>(data))
+        if (isNode())
         {
             // std::cout << key << "\n";
             auto& map = std::get<map_t>(data);
@@ -67,7 +67,7 @@ struct Dict
 
             return *std::get<map_t>(data)[key];
         }
-        else if (std::holds_alternative<NoValue>(data))
+        else if (isEmpty())
         {
             data      = map_t{};
             auto& map = std::get<map_t>(data);
@@ -80,12 +80,20 @@ struct Dict
     }
 
 
-    bool isFinal() const
+    bool isLeaf() const noexcept
     {
-        return !std::holds_alternative<map_t>(data) && !std::holds_alternative<NoValue>(data);
+        return !isNode() && !isEmpty();
     }
 
+    bool isNode() const noexcept
+    {
+        return std::holds_alternative<map_t>(data);
+    }
 
+    bool isEmpty() const noexcept
+    {
+        return std::holds_alternative<NoValue>(data);
+    }
 
     template<typename T, typename U = std::enable_if_t<is_in<T, Types...>()>>
     Dict& operator=(const T& value)
@@ -113,7 +121,7 @@ struct Dict
         {
             return std::get<T>(data);
         }
-        else if (std::holds_alternative<NoValue>(data))
+        else if (isEmpty())
         {
             return defaultValue;
         }
@@ -138,17 +146,48 @@ struct Dict
 
     std::size_t size()const noexcept
     {
-        if(std::holds_alternative<map_t>(data))
+        if(isNode())
             return std::size(std::get<map_t>(data));
-        if(std::holds_alternative<NoValue>(data))
+        if(isEmpty())
             return 0;
         return 1;
     }
 
+    decltype (auto) begin()
+    {
+        if(isNode())
+            return std::begin(std::get<map_t>(data));
+        else
+            throw std::runtime_error("cppdict: can't iterate this node");
+    }
+
+    decltype (auto)  begin() const noexcept
+    {
+        if(isNode())
+            return std::begin(std::get<map_t>(data));
+        else
+            throw std::runtime_error("cppdict: can't iterate this node");
+    }
+
+    decltype (auto)  end()
+    {
+        if(isNode())
+            return std::end(std::get<map_t>(data));
+        else
+            throw std::runtime_error("cppdict: can't iterate this node");
+    }
+
+    decltype (auto)  end() const noexcept
+    {
+        if(isNode())
+            return std::end(std::get<map_t>(data));
+        else
+            throw std::runtime_error("cppdict: can't iterate this node");
+    }
 private:
     void copy_data_()
     {
-        if (std::holds_alternative<map_t>(data))
+        if (isNode())
         {
             auto& my_data = std::get<map_t>(data);
             for (const auto& [key, value] : my_data)
