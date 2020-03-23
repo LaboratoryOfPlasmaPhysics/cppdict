@@ -41,6 +41,21 @@ struct Dict
     static inline std::string currentKey;
 #endif
 
+    Dict() = default;
+    Dict(Dict&&) = default;
+    Dict(const Dict& other)
+        :data{other.data}
+    {
+        if(std::holds_alternative<map_t>(data))
+        {
+            auto & my_data = std::get<map_t>(data);
+            for( const auto& [key,value]:my_data)
+            {
+                my_data[key] = std::make_shared<Dict>(*value.get());
+            }
+        }
+    }
+
     Dict& operator[](const std::string& key)
     {
 #ifndef NDEBUG
