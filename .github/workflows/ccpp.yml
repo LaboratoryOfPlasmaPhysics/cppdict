@@ -1,0 +1,21 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Configure with CMake
+      run: cmake -S . -B build_cmake
+    - name: Build (CMake)
+      run: cmake --build build_cmake
+    - name: Run tests (CMake)
+      run: cd build_cmake && ctest && cd ..
