@@ -72,8 +72,9 @@ namespace // Visitor details
     {
         if (node.isNode())
         {
-            for (const auto& [key, child_node] : std::get<typename NodeT::map_t>(node.data))
+            for (const auto& [_key, child_node] : std::get<typename NodeT::map_t>(node.data))
             {
+                auto const& key = _key;
                 if (!is_values_only_v<visit_policy_t> or child_node->isValue())
                 {
                     std::visit(
@@ -272,8 +273,9 @@ struct Dict
     void visit_leaves(Ts... lambdas)
     {
         if (isNode())
-            for (const auto& [key, node] : std::get<map_t>(data))
+            for (const auto& [_key, node] : std::get<map_t>(data))
             {
+                const auto& key = _key;
                 if (node->isNode())
                 {
                     node->visit_leaves(std::forward<Ts>(lambdas)...);
