@@ -74,12 +74,17 @@ namespace // Visitor details
         {
             for (const auto& [key, child_node] : std::get<typename NodeT::map_t>(node.data))
             {
-                if (!is_values_only_v<visit_policy_t> or child_node->isValue())
-                {
-                    std::visit(
-                        [key, lambdas...](auto&& value) { make_visitor(lambdas...)(key, value); },
-                        child_node->data);
-                }
+                const auto visitor = [&lambdas...]()constexpr{
+                    if constexpr (is_values_only_v<visit_policy_t>)
+                        return make_visitor([](const std::string&, const typename NodeT::map_t&) {},
+                                            [](const std::string&, const NoValue&) {},
+                                            lambdas...);
+                    else
+                        return make_visitor(lambdas...);
+                    }();
+                std::visit(
+                    [&visitor,&key, lambdas...](auto&& value) { visitor(key, value); },
+                    child_node->data);
             }
         }
         else
