@@ -23,27 +23,72 @@ constexpr bool is_in()
     return std::disjunction_v<std::is_same<T1, T2>...>;
 }
 
-
 struct NoValue
 {
 };
 
-namespace
+namespace // Visitor details
 {
-    template <typename... Ts>
+    struct values_only_t
+    {
+    };
+    struct all_nodes_t
+    {
+    };
+    template<class _Tp>
+    struct is_visit_policy : std::false_type
+    {
+    };
+    template<>
+    struct is_visit_policy<all_nodes_t> : std::true_type
+    {
+    };
+    template<>
+    struct is_visit_policy<values_only_t> : std::true_type
+    {
+    };
+    template<typename T>
+    inline constexpr bool is_values_only_v = std::is_same_v<T, values_only_t>;
+    template<typename... Ts>
+
     struct Visitor : Ts...
     {
-        Visitor(const Ts&... args) : Ts(args)... {}
+        Visitor(const Ts&... args)
+            : Ts(args)...
+        {
+        }
 
         using Ts::operator()...;
     };
 
-    template <typename... Ts>
+    template<typename... Ts>
     auto make_visitor(Ts... lambdas)
     {
         return Visitor<Ts...>(lambdas...);
     }
-}
+
+    template<typename visit_policy_t, typename NodeT, typename... Ts>
+    void visit_impl(NodeT& node, Ts... lambdas)
+    {
+        if (node.isNode())
+        {
+            for (const auto& [key, child_node] : std::get<typename NodeT::map_t>(node.data))
+            {
+                if (!is_values_only_v<visit_policy_t> or child_node->isLeaf())
+                {
+                    std::visit(
+                        [key, lambdas...](auto&& value) { make_visitor(lambdas...)(key, value); },
+                        child_node->data);
+                }
+            }
+        }
+        else
+            throw std::runtime_error("cppdict: can only visit node");
+    }
+} // namespace
+
+constexpr values_only_t visit_values_only;
+constexpr all_nodes_t visit_all_nodes;
 
 template<typename... Types>
 struct Dict
@@ -97,20 +142,11 @@ struct Dict
     }
 
 
-    bool isLeaf() const noexcept
-    {
-        return !isNode() && !isEmpty();
-    }
+    bool isLeaf() const noexcept { return !isNode() && !isEmpty(); }
 
-    bool isNode() const noexcept
-    {
-        return std::holds_alternative<map_t>(data);
-    }
+    bool isNode() const noexcept { return std::holds_alternative<map_t>(data); }
 
-    bool isEmpty() const noexcept
-    {
-        return std::holds_alternative<NoValue>(data);
-    }
+    bool isEmpty() const noexcept { return std::holds_alternative<NoValue>(data); }
 
     template<typename T, typename U = std::enable_if_t<is_in<T, Types...>()>>
     Dict& operator=(const T& value)
@@ -161,77 +197,80 @@ struct Dict
         throw std::runtime_error("cppdict: contains() has no a map");
     }
 
-    std::size_t size()const noexcept
+    std::size_t size() const noexcept
     {
-        if(isNode())
+        if (isNode())
             return std::size(std::get<map_t>(data));
-        if(isEmpty())
+        if (isEmpty())
             return 0;
         return 1;
     }
 
-    decltype (auto) begin()
+    decltype(auto) begin()
     {
-        if(isNode())
+        if (isNode())
             return std::begin(std::get<map_t>(data));
         else
             throw std::runtime_error("cppdict: can't iterate this node");
     }
 
-    decltype (auto)  begin() const noexcept
+    decltype(auto) begin() const noexcept
     {
-        if(isNode())
+        if (isNode())
             return std::begin(std::get<map_t>(data));
         else
             throw std::runtime_error("cppdict: can't iterate this node");
     }
 
-    decltype (auto)  end()
+    decltype(auto) end()
     {
-        if(isNode())
+        if (isNode())
             return std::end(std::get<map_t>(data));
         else
             throw std::runtime_error("cppdict: can't iterate this node");
     }
 
-    decltype (auto)  end() const noexcept
+    decltype(auto) end() const noexcept
     {
-        if(isNode())
+        if (isNode())
             return std::end(std::get<map_t>(data));
         else
             throw std::runtime_error("cppdict: can't iterate this node");
     }
 
-    template <typename... Ts>
+
+    template<class visit_policy_t, typename... Ts,
+             std::enable_if_t<is_visit_policy<visit_policy_t>::value, int> = 0>
+    void visit(visit_policy_t visit_policy, Ts... lambdas)
+    {
+        visit_impl<visit_policy_t>(*this, std::forward<Ts>(lambdas)...);
+    }
+
+    template<typename... Ts>
     void visit(Ts... lambdas)
     {
-        if(isNode())
-            for(const auto& [key,node]:std::get<map_t>(data))
-            {
-                std::visit([key, lambdas...](auto &&value){make_visitor(lambdas...)(key,value);}, node->data);
-            }
-        else
-            throw std::runtime_error("cppdict: can only visit node");
+        visit_impl<values_only_t>(*this, std::forward<Ts>(lambdas)...);
     }
 
-    template <typename... Ts>
+    template<typename... Ts>
     void visit_leaves(Ts... lambdas)
     {
-        if(isNode())
-            for(const auto& [key,node]:std::get<map_t>(data))
+        if (isNode())
+            for (const auto& [key, node] : std::get<map_t>(data))
             {
-                if(node->isNode())
+                if (node->isNode())
                 {
                     node->visit_leaves(std::forward<Ts>(lambdas)...);
                 }
-                else if(node->isLeaf())
+                else if (node->isLeaf())
                 {
-                    std::visit([key, lambdas...](auto &&value){make_visitor(lambdas...)(key,value);}, node->data);
+                    std::visit(
+                        [key, lambdas...](auto&& value) { make_visitor(lambdas...)(key, value); },
+                        node->data);
                 }
             }
         else
             throw std::runtime_error("cppdict: can only visit node");
-
     }
 
 private:
