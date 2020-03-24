@@ -47,6 +47,7 @@ TEST_CASE("Visit node's children", "[cppdict::Dict<int, double, std::string> stl
     dict["first"]           = 3.14;
     dict["second"]          = 1;
     dict["third"]["level2"] = std::string{"hello"};
+    dict["fourth"]          = std::string{"world"};
     SECTION("Can visit in read only mode")
     {
         auto node_count   = 0UL;
@@ -60,7 +61,7 @@ TEST_CASE("Visit node's children", "[cppdict::Dict<int, double, std::string> stl
         REQUIRE(node_count == 1UL);
         REQUIRE(int_count == 1UL);
         REQUIRE(double_count == 1UL);
-        REQUIRE(string_count == 0UL);
+        REQUIRE(string_count == 1UL);
     }
     SECTION("Can visit values only, IE filter out nodes")
     {
@@ -77,7 +78,7 @@ TEST_CASE("Visit node's children", "[cppdict::Dict<int, double, std::string> stl
         REQUIRE(node_count == 0UL);
         REQUIRE(int_count == 1UL);
         REQUIRE(double_count == 1UL);
-        REQUIRE(string_count == 0UL);
+        REQUIRE(string_count == 1UL);
     }
     SECTION("Can visit values only(default visit), IE filter out nodes")
     {
@@ -92,7 +93,7 @@ TEST_CASE("Visit node's children", "[cppdict::Dict<int, double, std::string> stl
         REQUIRE(node_count == 0UL);
         REQUIRE(int_count == 1UL);
         REQUIRE(double_count == 1UL);
-        REQUIRE(string_count == 0UL);
+        REQUIRE(string_count == 1UL);
     }
     SECTION("Visitor can modify values")
     {
