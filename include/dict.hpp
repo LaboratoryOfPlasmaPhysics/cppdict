@@ -125,7 +125,11 @@ struct Dict
         this->copy_data_();
     }
 
-    Dict& operator=(const Dict& other) { this->copy_data_(); }
+    Dict& operator=(const Dict& other)
+    {
+        this->copy_data_();
+        return *this;
+    }
     Dict& operator=(Dict&& other) = default;
     Dict& operator[](const std::string& key)
     {
