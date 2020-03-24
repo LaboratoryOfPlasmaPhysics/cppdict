@@ -36,8 +36,6 @@ jobs:
     - uses: actions/checkout@v2
     - name: Configure with Meson
       run: meson -Db_coverage=true . build
-    - name: Configure with meson
-      run: meson -Db_coverage=true . build
     - name: Build (meson)
       run: ninja -C build
     - name: Run tests (meson)
