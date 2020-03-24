@@ -74,17 +74,17 @@ namespace // Visitor details
         {
             for (const auto& [key, child_node] : std::get<typename NodeT::map_t>(node.data))
             {
-                const auto visitor = [&lambdas...]()constexpr{
-                    if constexpr (is_values_only_v<visit_policy_t>)
-                        return make_visitor([](const std::string&, const typename NodeT::map_t&) {},
-                                            [](const std::string&, const NoValue&) {},
-                                            lambdas...);
-                    else
-                        return make_visitor(lambdas...);
-                    }();
-                std::visit(
-                    [&visitor,&key, lambdas...](auto&& value) { visitor(key, value); },
-                    child_node->data);
+                if (!is_values_only_v<visit_policy_t> or child_node->isValue())
+                {
+                    std::visit(
+                        [key, lambdas...](auto&& value) {
+                            using T = std::decay_t<decltype(value)>;
+                            if constexpr (NodeT::template is_value_v<
+                                              T> or !is_values_only_v<visit_policy_t>)
+                                make_visitor(lambdas...)(key, value);
+                        },
+                        child_node->data);
+                }
             }
         }
         else
@@ -101,6 +101,15 @@ struct Dict
     using node_ptr = std::shared_ptr<Dict>;
     using map_t    = std::map<std::string, node_ptr>;
     using data_t   = std::variant<NoValue, map_t, Types...>;
+
+    template<typename T>
+    struct is_value : std::conditional<!std::is_same_v<T, NoValue> and !std::is_same_v<T, map_t>,
+                                       std::true_type, std::false_type>::type
+    {
+    };
+    template<typename T>
+    static constexpr bool is_value_v = is_value<T>::value;
+
 
     data_t data = NoValue{};
 #ifndef NDEBUG
