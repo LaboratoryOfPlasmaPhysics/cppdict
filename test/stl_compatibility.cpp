@@ -48,17 +48,23 @@ TEST_CASE("Visit node's children", "[cppdict::Dict<int, double, std::string> stl
     dict["second"]          = 1;
     dict["third"]["level2"] = std::string{"hello"};
     dict["fourth"]          = std::string{"world"};
+    dict["empty"];
     SECTION("Can visit in read only mode")
     {
         auto node_count   = 0UL;
+         auto empty_count   = 0UL;
         auto int_count    = 0UL;
         auto double_count = 0UL;
         auto string_count = 0UL;
-        dict.visit(cppdict::visit_all_nodes,[&node_count](const std::string&, const auto&) { node_count++; },
-                   [&double_count](const std::string&, double) { double_count++; },
-                   [&int_count](const std::string&, int) { int_count++; },
-                   [&string_count](const std::string&, const std::string&) { string_count++; });
+        dict.visit(
+            cppdict::visit_all_nodes,
+            [&node_count](const std::string&, const auto&) { node_count++; },
+            [&empty_count](const std::string&, const cppdict::NoValue&) { empty_count++; },
+            [&double_count](const std::string&, double) { double_count++; },
+            [&int_count](const std::string&, int) { int_count++; },
+            [&string_count](const std::string&, const std::string&) { string_count++; });
         REQUIRE(node_count == 1UL);
+        REQUIRE(empty_count == 1UL);
         REQUIRE(int_count == 1UL);
         REQUIRE(double_count == 1UL);
         REQUIRE(string_count == 1UL);
@@ -102,6 +108,11 @@ TEST_CASE("Visit node's children", "[cppdict::Dict<int, double, std::string> stl
             [](const std::string&, double) {}, [](const std::string&, int& value) { value = 42; },
             [](const std::string&, const std::string&) {});
         REQUIRE(dict["second"].to<int>() == 42);
+    }
+    SECTION("Visiting leaves is forbiden")
+    {
+        REQUIRE_THROWS_WITH(dict["first"].visit([](const std::string&, const auto&) {}),
+                            "cppdict: can only visit node");
     }
 }
 

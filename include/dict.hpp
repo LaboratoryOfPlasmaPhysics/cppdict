@@ -74,7 +74,7 @@ namespace // Visitor details
         {
             for (const auto& [key, child_node] : std::get<typename NodeT::map_t>(node.data))
             {
-                if (!is_values_only_v<visit_policy_t> or child_node->isLeaf())
+                if (!is_values_only_v<visit_policy_t> or child_node->isValue())
                 {
                     std::visit(
                         [key, lambdas...](auto&& value) { make_visitor(lambdas...)(key, value); },
@@ -147,6 +147,8 @@ struct Dict
     bool isNode() const noexcept { return std::holds_alternative<map_t>(data); }
 
     bool isEmpty() const noexcept { return std::holds_alternative<NoValue>(data); }
+
+    bool isValue() const noexcept { return !isNode() and !isEmpty(); }
 
     template<typename T, typename U = std::enable_if_t<is_in<T, Types...>()>>
     Dict& operator=(const T& value)
