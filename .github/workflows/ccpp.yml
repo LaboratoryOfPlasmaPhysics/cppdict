@@ -14,7 +14,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Configure with CMake
-      run: cmake -S . -B build_cmake
+      run: cmake -DBUILD_TEST:bool=ON -S . -B build_cmake
     - name: Build (CMake)
       run: cmake --build build_cmake
     - name: Run tests (CMake)
