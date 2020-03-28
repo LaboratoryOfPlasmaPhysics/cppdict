@@ -23,3 +23,8 @@ demo1 = executable('demo1','examples/demo1.cpp',
                 dependencies:[cppdict_dep],
                 install: false
                 )
+
+demo_visitor = executable('demo_visitor','examples/visitor.cpp',
+                dependencies:[cppdict_dep],
+                install: false
+                )

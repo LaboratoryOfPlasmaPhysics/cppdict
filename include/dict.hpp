@@ -99,9 +99,11 @@ constexpr all_nodes_t visit_all_nodes;
 template<typename... Types>
 struct Dict
 {
-    using node_ptr = std::shared_ptr<Dict>;
-    using map_t    = std::map<std::string, node_ptr>;
-    using data_t   = std::variant<NoValue, map_t, Types...>;
+    using node_ptr     = std::shared_ptr<Dict>;
+    using map_t        = std::map<std::string, node_ptr>;
+    using data_t       = std::variant<NoValue, map_t, Types...>;
+    using empty_leaf_t = NoValue;
+    using node_t       = map_t;
 
     template<typename T>
     struct is_value : std::conditional<!std::is_same_v<T, NoValue> and !std::is_same_v<T, map_t>,
@@ -127,6 +129,7 @@ struct Dict
 
     Dict& operator=(const Dict& other)
     {
+        this->data = other.data;
         this->copy_data_();
         return *this;
     }
@@ -235,7 +238,7 @@ struct Dict
             throw std::runtime_error("cppdict: can't iterate this node");
     }
 
-    decltype(auto) begin() const noexcept
+    decltype(auto) begin() const
     {
         if (isNode())
             return std::begin(std::get<map_t>(data));
@@ -251,7 +254,7 @@ struct Dict
             throw std::runtime_error("cppdict: can't iterate this node");
     }
 
-    decltype(auto) end() const noexcept
+    decltype(auto) end() const
     {
         if (isNode())
             return std::end(std::get<map_t>(data));
@@ -262,7 +265,7 @@ struct Dict
 
     template<class visit_policy_t, typename... Ts,
              std::enable_if_t<is_visit_policy<visit_policy_t>::value, int> = 0>
-    void visit(visit_policy_t visit_policy, Ts... lambdas)
+    void visit(visit_policy_t, Ts... lambdas)
     {
         visit_impl<visit_policy_t>(*this, std::forward<Ts>(lambdas)...);
     }
