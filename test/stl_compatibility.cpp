@@ -59,7 +59,7 @@ TEST_CASE("Visit node's children", "[cppdict::Dict<int, double, std::string> stl
         dict.visit(
             cppdict::visit_all_nodes,
             [&node_count](const std::string&, const auto&) { node_count++; },
-            [&empty_count](const std::string&, const cppdict::NoValue&) { empty_count++; },
+            [&empty_count](const std::string&, const Dict::empty_leaf_t&) { empty_count++; },
             [&double_count](const std::string&, double) { double_count++; },
             [&int_count](const std::string&, int) { int_count++; },
             [&string_count](const std::string&, const std::string&) { string_count++; });
