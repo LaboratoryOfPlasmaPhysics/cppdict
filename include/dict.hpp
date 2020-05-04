@@ -17,15 +17,13 @@
 
 namespace cppdict
 {
-template<typename T1, typename... T2>
-constexpr bool is_in()
-{
-    return std::disjunction_v<std::is_same<T1, T2>...>;
+namespace  {
+    template<typename T1, typename... T2>
+    constexpr bool is_any_of()
+    {
+        return std::disjunction_v<std::is_same<T1, T2>...>;
+    }
 }
-
-struct NoValue
-{
-};
 
 namespace // Visitor details
 {
@@ -72,7 +70,7 @@ namespace // Visitor details
     {
         if (node.isNode())
         {
-            for (const auto& [_key, child_node] : std::get<typename NodeT::map_t>(node.data))
+            for (const auto& [_key, child_node] : std::get<typename NodeT::node_t>(node.data))
             {
                 auto const& key = _key;
                 if (!is_values_only_v<visit_policy_t> or child_node->isValue())
@@ -99,12 +97,13 @@ constexpr all_nodes_t visit_all_nodes;
 template<typename... Types>
 struct Dict
 {
-    using node_ptr = std::shared_ptr<Dict>;
-    using map_t    = std::map<std::string, node_ptr>;
-    using data_t   = std::variant<NoValue, map_t, Types...>;
+    using node_ptr     = std::shared_ptr<Dict>;
+    using empty_leaf_t = std::monostate;
+    using node_t       = std::map<std::string, node_ptr>;
+    using data_t       = std::variant<empty_leaf_t, node_t, Types...>;
 
     template<typename T>
-    struct is_value : std::conditional<!std::is_same_v<T, NoValue> and !std::is_same_v<T, map_t>,
+    struct is_value : std::conditional<!std::is_same_v<T, empty_leaf_t> and !std::is_same_v<T, node_t>,
                                        std::true_type, std::false_type>::type
     {
     };
@@ -112,7 +111,7 @@ struct Dict
     static constexpr bool is_value_v = is_value<T>::value;
 
 
-    data_t data = NoValue{};
+    data_t data = empty_leaf_t{};
 #ifndef NDEBUG
     static inline std::string currentKey;
 #endif
@@ -127,6 +126,7 @@ struct Dict
 
     Dict& operator=(const Dict& other)
     {
+        this->data = other.data;
         this->copy_data_();
         return *this;
     }
@@ -139,22 +139,22 @@ struct Dict
         if (isNode())
         {
             // std::cout << key << "\n";
-            auto& map = std::get<map_t>(data);
+            auto& map = std::get<node_t>(data);
 
             if (std::end(map) == map.find(key))
             {
                 map[key] = std::make_shared<Dict>();
             }
 
-            return *std::get<map_t>(data)[key];
+            return *std::get<node_t>(data)[key];
         }
         else if (isEmpty())
         {
-            data      = map_t{};
-            auto& map = std::get<map_t>(data);
+            data      = node_t{};
+            auto& map = std::get<node_t>(data);
             map[key]  = std::make_shared<Dict>();
 
-            return *std::get<map_t>(data)[key];
+            return *std::get<node_t>(data)[key];
         }
 
         throw std::runtime_error("cppdict: invalid key: " + key);
@@ -163,13 +163,13 @@ struct Dict
 
     bool isLeaf() const noexcept { return !isNode() && !isEmpty(); }
 
-    bool isNode() const noexcept { return std::holds_alternative<map_t>(data); }
+    bool isNode() const noexcept { return std::holds_alternative<node_t>(data); }
 
-    bool isEmpty() const noexcept { return std::holds_alternative<NoValue>(data); }
+    bool isEmpty() const noexcept { return std::holds_alternative<empty_leaf_t>(data); }
 
     bool isValue() const noexcept { return !isNode() and !isEmpty(); }
 
-    template<typename T, typename U = std::enable_if_t<is_in<T, Types...>()>>
+    template<typename T, typename U = std::enable_if_t<is_any_of<T, Types...>()>>
     Dict& operator=(const T& value)
     {
         data = value;
@@ -208,8 +208,8 @@ struct Dict
 
     bool contains(std::string key)
     {
-        if (std::holds_alternative<map_t>(data))
-            return std::get<map_t>(data).count(key) > 0;
+        if (std::holds_alternative<node_t>(data))
+            return std::get<node_t>(data).count(key) > 0;
 
 #ifndef NDEBUG
         std::cout << __FILE__ << " " << __LINE__ << " " << currentKey << std::endl;
@@ -221,7 +221,7 @@ struct Dict
     std::size_t size() const noexcept
     {
         if (isNode())
-            return std::size(std::get<map_t>(data));
+            return std::size(std::get<node_t>(data));
         if (isEmpty())
             return 0;
         return 1;
@@ -230,15 +230,15 @@ struct Dict
     decltype(auto) begin()
     {
         if (isNode())
-            return std::begin(std::get<map_t>(data));
+            return std::begin(std::get<node_t>(data));
         else
             throw std::runtime_error("cppdict: can't iterate this node");
     }
 
-    decltype(auto) begin() const noexcept
+    decltype(auto) begin() const
     {
         if (isNode())
-            return std::begin(std::get<map_t>(data));
+            return std::begin(std::get<node_t>(data));
         else
             throw std::runtime_error("cppdict: can't iterate this node");
     }
@@ -246,15 +246,15 @@ struct Dict
     decltype(auto) end()
     {
         if (isNode())
-            return std::end(std::get<map_t>(data));
+            return std::end(std::get<node_t>(data));
         else
             throw std::runtime_error("cppdict: can't iterate this node");
     }
 
-    decltype(auto) end() const noexcept
+    decltype(auto) end() const
     {
         if (isNode())
-            return std::end(std::get<map_t>(data));
+            return std::end(std::get<node_t>(data));
         else
             throw std::runtime_error("cppdict: can't iterate this node");
     }
@@ -262,7 +262,7 @@ struct Dict
 
     template<class visit_policy_t, typename... Ts,
              std::enable_if_t<is_visit_policy<visit_policy_t>::value, int> = 0>
-    void visit(visit_policy_t visit_policy, Ts... lambdas)
+    void visit(visit_policy_t, Ts... lambdas)
     {
         visit_impl<visit_policy_t>(*this, std::forward<Ts>(lambdas)...);
     }
@@ -277,7 +277,7 @@ struct Dict
     void visit_leaves(Ts... lambdas)
     {
         if (isNode())
-            for (const auto& [_key, node] : std::get<map_t>(data))
+            for (const auto& [_key, node] : std::get<node_t>(data))
             {
                 const auto& key = _key;
                 if (node->isNode())
@@ -300,7 +300,7 @@ private:
     {
         if (isNode())
         {
-            auto& my_data = std::get<map_t>(data);
+            auto& my_data = std::get<node_t>(data);
             for (const auto& [key, value] : my_data)
             {
                 my_data[key] = std::make_shared<Dict>(*value.get());
@@ -324,7 +324,7 @@ auto& get(std::vector<std::string> keys, size_t iKey, Dict<Types...>& currentNod
 
 
 template<typename T, template<typename... Types> class Dict, typename... Types,
-         typename Check = std::enable_if_t<is_in<T, Types...>()>>
+         typename Check = std::enable_if_t<is_any_of<T, Types...>()>>
 void add(std::string path, T&& value, Dict<Types...>& dict)
 {
     std::vector<std::string> keys;

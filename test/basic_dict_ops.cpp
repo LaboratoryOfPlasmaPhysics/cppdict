@@ -8,6 +8,14 @@
 #include "dict.hpp"
 using Dict = cppdict::Dict<int, double, std::string>;
 
+TEST_CASE("Can (depp)copy nodes with operator=", "[simple cppdict::Dict<int, double, std::string>]")
+{
+    Dict dict;
+    dict["this"]["is"]["the"]["source"] = 3.14;
+    dict["destination"] = dict["this"];
+    REQUIRE(dict["destination"]["is"]["the"]["source"].to<double>()==3.14);
+}
+
 TEST_CASE("Can add values and retrieve them", "[simple cppdict::Dict<int, double, std::string>]")
 {
     Dict dict;

@@ -8,3 +8,7 @@ target_link_libraries(cppdict_demo
     cppdict  # Header-only library
 )
 
+add_executable(cppdict_visitor visitor.cpp)
+target_link_libraries(cppdict_visitor
+    cppdict  # Header-only library
+)
