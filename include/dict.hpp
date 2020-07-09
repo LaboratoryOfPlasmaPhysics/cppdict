@@ -208,14 +208,7 @@ struct Dict
 
     bool contains(std::string key)
     {
-        if (std::holds_alternative<node_t>(data))
-            return std::get<node_t>(data).count(key) > 0;
-
-#ifndef NDEBUG
-        std::cout << __FILE__ << " " << __LINE__ << " " << currentKey << std::endl;
-#endif
-
-        throw std::runtime_error("cppdict: contains() has no a map");
+        return isNode() and std::get<node_t>(data).count(key);
     }
 
     std::size_t size() const noexcept

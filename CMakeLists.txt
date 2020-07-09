@@ -62,3 +62,10 @@ endif ()
 if (BUILD_DEMO)
   add_subdirectory(examples)
 endif ()
+
+
+message("cppdict CMAKE OPTION LIST ")
+message("Build doc    : " ${BUILD_DOC})
+message("Build demo   : " ${BUILD_DEMO})
+message("Build bench  : " ${BUILD_BENCH})
+message("Build test   : " ${BUILD_TEST})
