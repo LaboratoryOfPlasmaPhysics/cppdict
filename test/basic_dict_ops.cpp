@@ -78,3 +78,15 @@ TEST_CASE("Deals with both references and values", "[simple cppdict::Dict<int, d
     }
 
 }
+
+
+TEST_CASE("Contains expects true or false", "[simple cppdict::Dict<int, double, std::string>]")
+{
+    Dict dict;
+    dict["this"]["is"]["the"]["source"] = 3.14;
+
+    REQUIRE(dict["this"].contains("is"));
+    REQUIRE(!dict.contains("is"));
+    REQUIRE(dict["this"]["is"]["the"].contains("source"));
+    REQUIRE(!dict["this"]["is"]["the"]["source"].contains("nothing"));
+}
