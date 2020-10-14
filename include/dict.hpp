@@ -17,13 +17,14 @@
 
 namespace cppdict
 {
-namespace  {
+namespace
+{
     template<typename T1, typename... T2>
     constexpr bool is_any_of()
     {
         return std::disjunction_v<std::is_same<T1, T2>...>;
     }
-}
+} // namespace
 
 namespace // Visitor details
 {
@@ -103,8 +104,9 @@ struct Dict
     using data_t       = std::variant<empty_leaf_t, node_t, Types...>;
 
     template<typename T>
-    struct is_value : std::conditional<!std::is_same_v<T, empty_leaf_t> and !std::is_same_v<T, node_t>,
-                                       std::true_type, std::false_type>::type
+    struct is_value
+        : std::conditional<!std::is_same_v<T, empty_leaf_t> and !std::is_same_v<T, node_t>,
+                           std::true_type, std::false_type>::type
     {
     };
     template<typename T>
@@ -131,6 +133,7 @@ struct Dict
         return *this;
     }
     Dict& operator=(Dict&& other) = default;
+
     Dict& operator[](const std::string& key)
     {
 #ifndef NDEBUG
@@ -155,6 +158,24 @@ struct Dict
             map[key]  = std::make_shared<Dict>();
 
             return *std::get<node_t>(data)[key];
+        }
+
+        throw std::runtime_error("cppdict: invalid key: " + key);
+    }
+
+
+    Dict& operator[](const std::string& key) const
+    {
+        if (isNode())
+        {
+            auto& map = std::get<node_t>(data);
+
+            if (std::end(map) == map.find(key))
+            {
+                throw std::runtime_error("cppdict: invalid key: " + key);
+            }
+
+            return *std::get<node_t>(data).at(key);
         }
 
         throw std::runtime_error("cppdict: invalid key: " + key);
@@ -206,10 +227,7 @@ struct Dict
         throw std::runtime_error("cppdict: not a map or not default");
     }
 
-    bool contains(std::string key)
-    {
-        return isNode() and std::get<node_t>(data).count(key);
-    }
+    bool contains(std::string key) { return isNode() and std::get<node_t>(data).count(key); }
 
     std::size_t size() const noexcept
     {
