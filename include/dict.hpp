@@ -227,7 +227,10 @@ struct Dict
         throw std::runtime_error("cppdict: not a map or not default");
     }
 
-    bool contains(std::string key) { return isNode() and std::get<node_t>(data).count(key); }
+    bool contains(std::string const key) const noexcept
+    {
+        return isNode() and std::get<node_t>(data).count(key);
+    }
 
     std::size_t size() const noexcept
     {
