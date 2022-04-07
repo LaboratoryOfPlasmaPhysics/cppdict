@@ -276,19 +276,19 @@ struct Dict
 
     template<class visit_policy_t, typename... Ts,
              std::enable_if_t<is_visit_policy<visit_policy_t>::value, int> = 0>
-    void visit(visit_policy_t, Ts... lambdas)
+    void visit(visit_policy_t, Ts... lambdas) const
     {
         visit_impl<visit_policy_t>(*this, std::forward<Ts>(lambdas)...);
     }
 
     template<typename... Ts>
-    void visit(Ts... lambdas)
+    void visit(Ts... lambdas) const
     {
         visit_impl<values_only_t>(*this, std::forward<Ts>(lambdas)...);
     }
 
     template<typename... Ts>
-    void visit_leaves(Ts... lambdas)
+    void visit_leaves(Ts... lambdas) const
     {
         if (isNode())
             for (const auto& [_key, node] : std::get<node_t>(data))
