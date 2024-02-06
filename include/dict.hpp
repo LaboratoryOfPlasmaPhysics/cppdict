@@ -379,13 +379,18 @@ std::optional<Dict<Types...>> get(std::vector<std::string> const& keys, size_t i
 
 template<typename T, template<typename... Types> class Dict, typename... Types,
          typename Check = std::enable_if_t<is_any_of<T, Types...>()>>
-void add(std::string path, T&& value, Dict<Types...>& dict)
+void add(std::vector<std::string> const& keys, T&& value, Dict<Types...>& dict)
 {
-    auto keys   = detail::split_string(path);
     auto&& node = get(keys, 0ul, dict);
     node        = std::forward<T>(value);
 }
 
+template<typename T, template<typename... Types> class Dict, typename... Types,
+         typename Check = std::enable_if_t<is_any_of<T, Types...>()>>
+void add(std::string const& path, T&& value, Dict<Types...>& dict)
+{
+    add(detail::split_string(path), std::forward<T>(value), dict);
+}
 
 template<typename T, typename... Types>
 T get_value(Dict<Types...> const& dict, std::vector<std::string> const& paths,
