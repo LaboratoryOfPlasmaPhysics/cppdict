@@ -183,13 +183,25 @@ struct Dict
     }
 
 
-    bool isLeaf() const noexcept { return !isNode() && !isEmpty(); }
+    bool isLeaf() const noexcept
+    {
+        return !isNode() && !isEmpty();
+    }
 
-    bool isNode() const noexcept { return std::holds_alternative<node_t>(data); }
+    bool isNode() const noexcept
+    {
+        return std::holds_alternative<node_t>(data);
+    }
 
-    bool isEmpty() const noexcept { return std::holds_alternative<empty_leaf_t>(data); }
+    bool isEmpty() const noexcept
+    {
+        return std::holds_alternative<empty_leaf_t>(data);
+    }
 
-    bool isValue() const noexcept { return !isNode() and !isEmpty(); }
+    bool isValue() const noexcept
+    {
+        return !isNode() and !isEmpty();
+    }
 
     template<typename T, typename U = std::enable_if_t<is_any_of<T, Types...>()>>
     Dict& operator=(const T& value)
@@ -338,25 +350,25 @@ auto& get(std::vector<std::string> keys, size_t iKey, Dict<Types...>& currentNod
 }
 
 
+auto _split_string(std::string const& path, char delimiter = '/')
+{
+    std::vector<std::string> keys;
+    std::string key;
+    std::istringstream tokenStream{path};
+    while (std::getline(tokenStream, key, delimiter))
+        keys.push_back(key);
+    return keys;
+}
 
 
 template<typename T, template<typename... Types> class Dict, typename... Types,
          typename Check = std::enable_if_t<is_any_of<T, Types...>()>>
 void add(std::string path, T&& value, Dict<Types...>& dict)
 {
-    std::vector<std::string> keys;
-    std::string key;
-    std::istringstream tokenStream{path};
-    while (std::getline(tokenStream, key, '/'))
-    {
-        keys.push_back(key);
-    }
-
+    auto keys   = _split_string(path);
     auto&& node = get(keys, 0ul, dict);
     node        = std::forward<T>(value);
 }
-
-
 
 
 template<typename Paths, typename... Types>
@@ -373,20 +385,18 @@ std::optional<Dict<Types...>> _traverse_to_node(Dict<Types...> const& dict, Path
     return std::nullopt;
 }
 
+
 template<typename... Types>
 std::optional<Dict<Types...>> traverse_to_node(Dict<Types...> const& dict, std::string const& path,
                                                char delimiter = '/')
 {
-    std::string tmp = "";
-    std::vector<std::string> paths;
-    std::istringstream iss(path);
-    while (std::getline(iss, tmp, delimiter))
-        paths.push_back(tmp);
+    auto paths = _split_string(path);
     return _traverse_to_node(dict, paths);
 }
 
+
 template<typename T, typename... Types>
-T const& get(Dict<Types...> const& dict, std::string const& path, char delimiter = '/')
+T const& at(Dict<Types...> const& dict, std::string const& path, char delimiter = '/')
 {
     auto leaf = traverse_to_node(dict, path, delimiter);
     if (leaf)
@@ -394,16 +404,16 @@ T const& get(Dict<Types...> const& dict, std::string const& path, char delimiter
     throw std::runtime_error("cppdict: contains no path " + path);
 }
 
+
 template<typename T, typename... Types>
-T get(Dict<Types...> const& dict, std::string const& path, T const default_value,
-      char delimiter = '/')
+T at(Dict<Types...> const& dict, std::string const& path, T const default_value,
+     char delimiter = '/')
 {
     auto leaf = traverse_to_node(dict, path, delimiter);
     if (leaf)
         return leaf->template to<T>();
     return default_value;
 }
-
 
 
 } // namespace cppdict

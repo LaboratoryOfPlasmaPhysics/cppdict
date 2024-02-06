@@ -1,9 +1,7 @@
-#define CATCH_CONFIG_MAIN
-#if __has_include(<catch2/catch.hpp>)
-#include <catch2/catch.hpp>
-#else
-#include <catch.hpp>
-#endif
+// #define CATCH_CONFIG_MAIN
+
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers.hpp>
 
 #include "dict.hpp"
 using Dict = cppdict::Dict<int, double, std::string>;
@@ -105,17 +103,17 @@ TEST_CASE("Dict const accessor", "[simple cppdict::Dict<int>]")
     REQUIRE_THROWS_WITH(dictRef["one"]["two"].to<double>(), "cppdict: invalid key: one");
 }
 
-TEST_CASE("Can get key by delimiter if exists", "or raises if missing")
+TEST_CASE("Can at key by delimiter if exists", "or raises if missing")
 {
     Dict dict;
     dict["this"]["is"]["pi"] = 3.14;
-    REQUIRE_THROWS_WITH(cppdict::get<double>(dict, "this/is/e"),
+    REQUIRE_THROWS_WITH(cppdict::at<double>(dict, "this/is/e"),
                         "cppdict: contains no path this/is/e");
 }
 
-TEST_CASE("Can get key by delimiter  if exists", "or default if missing")
+TEST_CASE("Can at key by delimiter  if exists", "or default if missing")
 {
     Dict dict;
     dict["this"]["is"]["pi"] = 3.14;
-    REQUIRE(cppdict::get(dict, "this/is/e", 2.71) == 2.71);
+    REQUIRE(cppdict::at(dict, "this/is/e", 2.71) == 2.71);
 }

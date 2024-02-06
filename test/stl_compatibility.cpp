@@ -1,9 +1,11 @@
-#define CATCH_CONFIG_MAIN
-#if __has_include(<catch2/catch.hpp>)
-#include <catch2/catch.hpp>
-#else
-#include <catch.hpp>
-#endif
+// #define CATCH_CONFIG_MAIN
+
+#include <numeric> // std::accumulate
+
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers.hpp>
+
+
 
 #include "dict.hpp"
 using Dict = cppdict::Dict<int, double, std::string>;
@@ -11,11 +13,17 @@ using Dict = cppdict::Dict<int, double, std::string>;
 TEST_CASE("can get size", "[cppdict::Dict<int, double, std::string> stl_compat]")
 {
     Dict dict;
-    SECTION("an empty dic has size == 0") { REQUIRE(std::size(dict) == 0); }
+    SECTION("an empty dic has size == 0")
+    {
+        REQUIRE(std::size(dict) == 0);
+    }
     dict["first"]           = 3.14;
     dict["second"]          = 1;
     dict["third"]["level2"] = std::string{"hello"};
-    SECTION("A dic with 3 elements has size == 3") { REQUIRE(std::size(dict) == 3); }
+    SECTION("A dic with 3 elements has size == 3")
+    {
+        REQUIRE(std::size(dict) == 3);
+    }
 }
 
 TEST_CASE("iterate over children", "[cppdict::Dict<int, double, std::string> stl_compat]")
@@ -52,7 +60,7 @@ TEST_CASE("Visit node's children", "[cppdict::Dict<int, double, std::string> stl
     SECTION("Can visit in read only mode")
     {
         auto node_count   = 0UL;
-         auto empty_count   = 0UL;
+        auto empty_count  = 0UL;
         auto int_count    = 0UL;
         auto double_count = 0UL;
         auto string_count = 0UL;
