@@ -338,10 +338,23 @@ private:
     }
 };
 
+namespace detail
+{
+    auto split_string(std::string const& path, char delimiter = '/')
+    {
+        std::vector<std::string> keys;
+        std::string key;
+        std::istringstream tokenStream{path};
+        while (std::getline(tokenStream, key, delimiter))
+            keys.push_back(key);
+        return keys;
+    }
+} // namespace detail
+
 
 
 template<typename... Types>
-auto& get(std::vector<std::string> keys, size_t iKey, Dict<Types...>& currentNode)
+auto& get(std::vector<std::string> const& keys, size_t iKey, Dict<Types...>& currentNode)
 {
     if (iKey == keys.size() - 1)
         return currentNode[keys[iKey]];
@@ -349,15 +362,18 @@ auto& get(std::vector<std::string> keys, size_t iKey, Dict<Types...>& currentNod
     return get(keys, iKey + 1, currentNode[keys[iKey]]);
 }
 
-
-auto _split_string(std::string const& path, char delimiter = '/')
+template<typename... Types>
+std::optional<Dict<Types...>> get(std::vector<std::string> const& keys, size_t iKey,
+                                  Dict<Types...> const& currentNode)
 {
-    std::vector<std::string> keys;
-    std::string key;
-    std::istringstream tokenStream{path};
-    while (std::getline(tokenStream, key, delimiter))
-        keys.push_back(key);
-    return keys;
+    if (currentNode.contains(keys[iKey]))
+    {
+        auto const& next = currentNode[keys[iKey]];
+        if (iKey == keys.size() - 1)
+            return next;
+        return get(keys, ++iKey, next);
+    }
+    return std::nullopt;
 }
 
 
@@ -365,54 +381,26 @@ template<typename T, template<typename... Types> class Dict, typename... Types,
          typename Check = std::enable_if_t<is_any_of<T, Types...>()>>
 void add(std::string path, T&& value, Dict<Types...>& dict)
 {
-    auto keys   = _split_string(path);
+    auto keys   = detail::split_string(path);
     auto&& node = get(keys, 0ul, dict);
     node        = std::forward<T>(value);
 }
 
 
-template<typename Paths, typename... Types>
-std::optional<Dict<Types...>> _traverse_to_node(Dict<Types...> const& dict, Paths const& paths,
-                                                std::size_t idx = 0)
-{
-    if (dict.contains(paths[idx]))
-    {
-        auto const& next = dict[paths[idx]];
-        if (idx == paths.size() - 1)
-            return next;
-        return _traverse_to_node(next, paths, ++idx);
-    }
-    return std::nullopt;
-}
-
-
-template<typename... Types>
-std::optional<Dict<Types...>> traverse_to_node(Dict<Types...> const& dict, std::string const& path,
-                                               char delimiter = '/')
-{
-    auto paths = _split_string(path);
-    return _traverse_to_node(dict, paths);
-}
-
-
 template<typename T, typename... Types>
-T const& at(Dict<Types...> const& dict, std::string const& path, char delimiter = '/')
+T get_value(Dict<Types...> const& dict, std::vector<std::string> const& paths,
+            T const default_value)
 {
-    auto leaf = traverse_to_node(dict, path, delimiter);
-    if (leaf)
-        return leaf->template to<T>();
-    throw std::runtime_error("cppdict: contains no path " + path);
-}
-
-
-template<typename T, typename... Types>
-T at(Dict<Types...> const& dict, std::string const& path, T const default_value,
-     char delimiter = '/')
-{
-    auto leaf = traverse_to_node(dict, path, delimiter);
-    if (leaf)
+    if (auto leaf = get(paths, 0, dict))
         return leaf->template to<T>();
     return default_value;
+}
+
+template<typename T, typename... Types>
+T get_value(Dict<Types...> const& dict, std::string const& path, T const default_value,
+            char delimiter = '/')
+{
+    return get_value(dict, detail::split_string(path), default_value);
 }
 
 
