@@ -7,12 +7,13 @@ project(
 )
 
 cppdict_dep = declare_dependency(include_directories: include_directories('include'))
+catch_dep = dependency('catch2-with-main', version:'>3.0.0', required : true)
 
 install_headers(['./include/dict.hpp'], subdir : 'cppdict')
 
 foreach test:['basic_dict_ops','stl_compatibility']
     exe = executable(test,'test/'+test+'.cpp',
-                    dependencies:[cppdict_dep],
+                    dependencies:[cppdict_dep, catch_dep],
                     cpp_args : '-DCATCH_CONFIG_NO_POSIX_SIGNALS',
                     include_directories: include_directories('test'),
                     install: false
