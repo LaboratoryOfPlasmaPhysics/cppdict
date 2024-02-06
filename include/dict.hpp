@@ -340,7 +340,7 @@ private:
 
 namespace detail
 {
-    auto split_string(std::string const& path, char delimiter = '/')
+    auto inline split_string(std::string const& path, char delimiter = '/')
     {
         std::vector<std::string> keys;
         std::string key;
