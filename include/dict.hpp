@@ -7,6 +7,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <type_traits>
@@ -309,6 +310,8 @@ struct Dict
             throw std::runtime_error("cppdict: can only visit node");
     }
 
+
+
 private:
     void copy_data_()
     {
@@ -351,6 +354,54 @@ void add(std::string path, T&& value, Dict<Types...>& dict)
 
     auto&& node = get(keys, 0ul, dict);
     node        = std::forward<T>(value);
+}
+
+
+
+
+template<typename Paths, typename... Types>
+std::optional<Dict<Types...>> _traverse_to_node(Dict<Types...> const& dict, Paths const& paths,
+                                                std::size_t idx = 0)
+{
+    if (dict.contains(paths[idx]))
+    {
+        auto const& next = dict[paths[idx]];
+        if (idx == paths.size() - 1)
+            return next;
+        return _traverse_to_node(next, paths, ++idx);
+    }
+    return std::nullopt;
+}
+
+template<typename... Types>
+std::optional<Dict<Types...>> traverse_to_node(Dict<Types...> const& dict, std::string const& path,
+                                               char delimiter = '/')
+{
+    std::string tmp = "";
+    std::vector<std::string> paths;
+    std::istringstream iss(path);
+    while (std::getline(iss, tmp, delimiter))
+        paths.push_back(tmp);
+    return _traverse_to_node(dict, paths);
+}
+
+template<typename T, typename... Types>
+T const& get(Dict<Types...> const& dict, std::string const& path, char delimiter = '/')
+{
+    auto leaf = traverse_to_node(dict, path, delimiter);
+    if (leaf)
+        return leaf->template to<T>();
+    throw std::runtime_error("cppdict: contains no path " + path);
+}
+
+template<typename T, typename... Types>
+T get(Dict<Types...> const& dict, std::string const& path, T const default_value,
+      char delimiter = '/')
+{
+    auto leaf = traverse_to_node(dict, path, delimiter);
+    if (leaf)
+        return leaf->template to<T>();
+    return default_value;
 }
 
 

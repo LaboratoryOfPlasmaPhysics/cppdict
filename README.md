@@ -5,7 +5,7 @@
 
 # cppdict (C++Dict)
 
-C++Dict is a C++ single header fexible netsed dictionary where keys are std::string and values are any of user defined types plus dictionary type.
+C++Dict is a C++ single header fexible nested dictionary where keys are std::string and values are any of user defined types plus dictionary type.
 This allows you to build trees where each node has a name and leaves holds values of user defined types.
 
 # How to use
