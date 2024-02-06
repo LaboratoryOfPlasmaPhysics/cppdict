@@ -10,7 +10,7 @@ jobs:
   gcc:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Configure with CMake
       run: cmake -DBUILD_TEST:bool=ON -S . -B build_cmake
     - name: Build (CMake)
@@ -21,7 +21,7 @@ jobs:
   clang:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Configure with CMake
       run: cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DBUILD_TEST:bool=ON -S . -B build_cmake
     - name: Build (CMake)
@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     container: jeandet/simple_cxx_fedora
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Configure with Meson
       run: meson -Db_coverage=true . build
     - name: Build (meson)

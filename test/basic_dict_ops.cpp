@@ -104,3 +104,18 @@ TEST_CASE("Dict const accessor", "[simple cppdict::Dict<int>]")
     REQUIRE_THROWS_WITH(dictRef["second"].to<double>(), "cppdict: to<T> invalid type");
     REQUIRE_THROWS_WITH(dictRef["one"]["two"].to<double>(), "cppdict: invalid key: one");
 }
+
+TEST_CASE("Can get key by delimiter if exists", "or raises if missing")
+{
+    Dict dict;
+    dict["this"]["is"]["pi"] = 3.14;
+    REQUIRE_THROWS_WITH(cppdict::get<double>(dict, "this/is/e"),
+                        "cppdict: contains no path this/is/e");
+}
+
+TEST_CASE("Can get key by delimiter  if exists", "or default if missing")
+{
+    Dict dict;
+    dict["this"]["is"]["pi"] = 3.14;
+    REQUIRE(cppdict::get(dict, "this/is/e", 2.71) == 2.71);
+}
