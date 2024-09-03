@@ -405,7 +405,7 @@ template<typename T, typename... Types>
 T get_value(Dict<Types...> const& dict, std::string const& path, T const default_value,
             char delimiter = '/')
 {
-    return get_value(dict, detail::split_string(path), default_value);
+    return get_value(dict, detail::split_string(path, delimiter), default_value);
 }
 
 
