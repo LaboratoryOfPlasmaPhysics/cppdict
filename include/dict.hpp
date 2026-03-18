@@ -80,8 +80,8 @@ namespace // Visitor details
                     std::visit(
                         [key, lambdas...](auto&& value) {
                             using T = std::decay_t<decltype(value)>;
-                            if constexpr (NodeT::template is_value_v<
-                                              T> or !is_values_only_v<visit_policy_t>)
+                            if constexpr (NodeT::template is_value_v<T>
+                                          or !is_values_only_v<visit_policy_t>)
                                 make_visitor(lambdas...)(key, value);
                         },
                         child_node->data);
@@ -183,25 +183,13 @@ struct Dict
     }
 
 
-    bool isLeaf() const noexcept
-    {
-        return !isNode() && !isEmpty();
-    }
+    bool isLeaf() const noexcept { return !isNode() && !isEmpty(); }
 
-    bool isNode() const noexcept
-    {
-        return std::holds_alternative<node_t>(data);
-    }
+    bool isNode() const noexcept { return std::holds_alternative<node_t>(data); }
 
-    bool isEmpty() const noexcept
-    {
-        return std::holds_alternative<empty_leaf_t>(data);
-    }
+    bool isEmpty() const noexcept { return std::holds_alternative<empty_leaf_t>(data); }
 
-    bool isValue() const noexcept
-    {
-        return !isNode() and !isEmpty();
-    }
+    bool isValue() const noexcept { return !isNode() and !isEmpty(); }
 
     template<typename T, typename U = std::enable_if_t<is_any_of<T, Types...>()>>
     Dict& operator=(const T& value)
@@ -238,6 +226,18 @@ struct Dict
         std::cout << __FILE__ << " " << __LINE__ << " " << currentKey << std::endl;
 #endif
         throw std::runtime_error("cppdict: not a map or not default");
+    }
+
+    template<typename T, typename U = std::enable_if_t<is_any_of<T, Types...>()>>
+    operator T&() const
+    {
+        return to<T>();
+    }
+
+    template<typename T, typename U = std::enable_if_t<is_any_of<T, Types...>()>>
+    operator T&()
+    {
+        return to<T>();
     }
 
     bool contains(std::string const key) const noexcept

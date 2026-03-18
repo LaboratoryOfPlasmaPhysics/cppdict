@@ -14,6 +14,14 @@ TEST_CASE("Can (depp)copy nodes with operator=", "[simple cppdict::Dict<int, dou
     REQUIRE(dict["destination"]["is"]["the"]["source"].to<double>() == 3.14);
 }
 
+TEST_CASE("Can convert directly to type")
+{
+    Dict dict;
+    dict["this"]["is"]["the"]["source"] = 3.14;
+    double const pi                     = dict["this"]["is"]["the"]["source"];
+    REQUIRE(pi == 3.14);
+}
+
 TEST_CASE("Can add values and retrieve them", "[simple cppdict::Dict<int, double, std::string>]")
 {
     Dict dict;
