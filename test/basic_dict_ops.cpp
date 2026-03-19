@@ -6,7 +6,7 @@
 #include "dict.hpp"
 using Dict = cppdict::Dict<int, double, std::string>;
 
-TEST_CASE("Can (depp)copy nodes with operator=", "[simple cppdict::Dict<int, double, std::string>]")
+TEST_CASE("Can (deep)copy nodes with operator=", "[simple cppdict::Dict<int, double, std::string>]")
 {
     Dict dict;
     dict["this"]["is"]["the"]["source"] = 3.14;

@@ -26,7 +26,9 @@ int main()
     std::cout << md["test"]["super"].to<int>() << "\n";
 
     cppdict::add("toto/tata/titi", 2.5, md);
-    std::cout << "at toto/tata/titi : " << md["toto"]["tata"]["titi"].to<double>() << "\n";
+
+    double const d = md["toto"]["tata"]["titi"];
+    std::cout << "at toto/tata/titi : " << d << "\n";
 }
 
 ```
