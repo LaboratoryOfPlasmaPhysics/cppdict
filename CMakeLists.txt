@@ -1,5 +1,5 @@
-# Requires at least CMake 3.5
-cmake_minimum_required (VERSION 3.5)
+# Requires at least CMake 3.20.1
+cmake_minimum_required (VERSION 3.20.1) # released April 8, 2021
 
 ##############################
 # Project name
