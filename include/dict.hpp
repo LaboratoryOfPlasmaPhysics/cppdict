@@ -1,9 +1,7 @@
 #ifndef DICT_H
 #define DICT_H
 
-#include <algorithm>
-#include <array>
-#include <functional>
+#include <concepts>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -11,21 +9,14 @@
 #include <sstream>
 #include <string>
 #include <type_traits>
-#include <typeinfo>
 #include <utility>
 #include <variant>
 #include <vector>
 
 namespace cppdict
 {
-namespace
-{
-    template<typename T1, typename... T2>
-    constexpr bool is_any_of()
-    {
-        return std::disjunction_v<std::is_same<T1, T2>...>;
-    }
-} // namespace
+template<typename T1, typename... T2>
+concept any_of = (std::same_as<T1, T2> || ...);
 
 namespace // Visitor details
 {
@@ -35,31 +26,19 @@ namespace // Visitor details
     struct all_nodes_t
     {
     };
-    template<class _Tp>
-    struct is_visit_policy : std::false_type
-    {
-    };
-    template<>
-    struct is_visit_policy<all_nodes_t> : std::true_type
-    {
-    };
-    template<>
-    struct is_visit_policy<values_only_t> : std::true_type
-    {
-    };
+    template<typename T>
+    concept visit_policy = std::same_as<T, values_only_t> or std::same_as<T, all_nodes_t>;
+
     template<typename T>
     inline constexpr bool is_values_only_v = std::is_same_v<T, values_only_t>;
-    template<typename... Ts>
 
+    template<typename... Ts>
     struct Visitor : Ts...
     {
-        Visitor(const Ts&... args)
-            : Ts(args)...
-        {
-        }
-
         using Ts::operator()...;
     };
+    template<typename... Ts>
+    Visitor(Ts...) -> Visitor<Ts...>;
 
     template<typename... Ts>
     auto make_visitor(Ts... lambdas)
@@ -105,13 +84,8 @@ struct Dict
     using data_t       = std::variant<empty_leaf_t, node_t, Types...>;
 
     template<typename T>
-    struct is_value
-        : std::conditional<!std::is_same_v<T, empty_leaf_t> and !std::is_same_v<T, node_t>,
-                           std::true_type, std::false_type>::type
-    {
-    };
-    template<typename T>
-    static constexpr bool is_value_v = is_value<T>::value;
+    static constexpr bool is_value_v
+        = !std::is_same_v<T, empty_leaf_t> and !std::is_same_v<T, node_t>;
 
 
     data_t data = empty_leaf_t{};
@@ -191,7 +165,8 @@ struct Dict
 
     bool isValue() const noexcept { return !isNode() and !isEmpty(); }
 
-    template<typename T, typename U = std::enable_if_t<is_any_of<T, Types...>()>>
+    template<typename T>
+        requires any_of<T, Types...>
     Dict& operator=(const T& value)
     {
         data = value;
@@ -228,13 +203,15 @@ struct Dict
         throw std::runtime_error("cppdict: not a map or not default");
     }
 
-    template<typename T, typename U = std::enable_if_t<is_any_of<T, Types...>()>>
+    template<typename T>
+        requires any_of<T, Types...>
     operator T&() const
     {
         return to<T>();
     }
 
-    template<typename T, typename U = std::enable_if_t<is_any_of<T, Types...>()>>
+    template<typename T>
+        requires any_of<T, Types...>
     operator T&()
     {
         return to<T>();
@@ -287,8 +264,8 @@ struct Dict
     }
 
 
-    template<class visit_policy_t, typename... Ts,
-             std::enable_if_t<is_visit_policy<visit_policy_t>::value, int> = 0>
+    template<typename visit_policy_t, typename... Ts>
+        requires visit_policy<visit_policy_t>
     void visit(visit_policy_t, Ts... lambdas) const
     {
         visit_impl<visit_policy_t>(*this, std::forward<Ts>(lambdas)...);
@@ -377,16 +354,16 @@ std::optional<Dict<Types...>> get(std::vector<std::string> const& keys, size_t i
 }
 
 
-template<typename T, template<typename... Types> class Dict, typename... Types,
-         typename Check = std::enable_if_t<is_any_of<T, Types...>()>>
+template<typename T, template<typename... Types> class Dict, typename... Types>
+    requires any_of<T, Types...>
 void add(std::vector<std::string> const& keys, T&& value, Dict<Types...>& dict)
 {
     auto&& node = get(keys, 0ul, dict);
     node        = std::forward<T>(value);
 }
 
-template<typename T, template<typename... Types> class Dict, typename... Types,
-         typename Check = std::enable_if_t<is_any_of<T, Types...>()>>
+template<typename T, template<typename... Types> class Dict, typename... Types>
+    requires any_of<T, Types...>
 void add(std::string const& path, T&& value, Dict<Types...>& dict)
 {
     add(detail::split_string(path), std::forward<T>(value), dict);
