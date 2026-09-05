@@ -27,7 +27,7 @@ option(BUILD_TEST "Build test" OFF)
 ##############################
 # Set additional compiler option
 ##############################
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 ##############################
