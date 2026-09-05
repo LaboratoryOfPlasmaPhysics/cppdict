@@ -33,6 +33,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+    - name: configure ubuntu
+      run: sudo apt-get update && sudo apt-get install -y gcovr lcov
     - name: update Meson
       run: python3 -m pip install meson -U
     - name: Configure with Meson
