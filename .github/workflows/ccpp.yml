@@ -38,7 +38,7 @@ jobs:
     - name: update Meson
       run: python3 -m pip install meson -U
     - name: Configure with Meson
-      run: meson -Db_coverage=true . build
+      run: CXX=clang++ meson -Db_coverage=true . build
     - name: Build (meson)
       run: ninja -C build
     - name: Run tests (meson)
