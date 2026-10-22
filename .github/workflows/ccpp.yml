@@ -34,26 +34,25 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: configure ubuntu
-      run: sudo apt-get update && sudo apt-get install -y gcovr lcov
+      run: sudo apt-get update && sudo apt-get install -y lcov
     - name: update Meson
       run: python3 -m pip install meson -U
     - name: Configure with Meson
-      run: CXX=clang++ meson -Db_coverage=true . build
+      run: CXX=g++ meson setup -Db_coverage=true . build
     - name: Build (meson)
       run: ninja -C build
     - name: Run tests (meson)
       run: ninja test -C build
     - name: Generate Coverage repport
       run: |
-        lcov --capture --directory . --output-file coverage.info
-        lcov --remove coverage.info '/usr/*' --output-file coverage.info
-        lcov --remove coverage.info '*/catch.hpp' --output-file coverage.info
+        lcov --capture --directory . --output-file coverage.info --ignore-errors mismatch,unused
+        lcov --remove coverage.info '/usr/*' '*/subprojects/*' '*/test/*' --output-file coverage.info --ignore-errors unused
         lcov --list coverage.info
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./coverage.info
+        files: ./coverage.info
         flags: unittests
         name: codecov-cdfpp
         yml: ./codecov.yml

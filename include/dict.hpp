@@ -15,8 +15,11 @@
 
 namespace cppdict
 {
-template<typename T1, typename... T2>
-concept any_of = (std::same_as<T1, T2> || ...);
+namespace detail
+{
+    template<typename T1, typename... T2>
+    concept any_of = (std::same_as<T1, T2> || ...);
+} // namespace detail
 
 namespace // Visitor details
 {
@@ -37,13 +40,11 @@ namespace // Visitor details
     {
         using Ts::operator()...;
     };
-    template<typename... Ts>
-    Visitor(Ts...) -> Visitor<Ts...>;
 
     template<typename... Ts>
     auto make_visitor(Ts... lambdas)
     {
-        return Visitor<Ts...>(lambdas...);
+        return Visitor<Ts...>{lambdas...};
     }
 
     template<typename visit_policy_t, typename NodeT, typename... Ts>
@@ -166,7 +167,7 @@ struct Dict
     bool isValue() const noexcept { return !isNode() and !isEmpty(); }
 
     template<typename T>
-        requires any_of<T, Types...>
+        requires detail::any_of<T, Types...>
     Dict& operator=(const T& value)
     {
         data = value;
@@ -204,14 +205,14 @@ struct Dict
     }
 
     template<typename T>
-        requires any_of<T, Types...>
+        requires detail::any_of<T, Types...>
     operator T&() const
     {
         return to<T>();
     }
 
     template<typename T>
-        requires any_of<T, Types...>
+        requires detail::any_of<T, Types...>
     operator T&()
     {
         return to<T>();
@@ -355,7 +356,7 @@ std::optional<Dict<Types...>> get(std::vector<std::string> const& keys, size_t i
 
 
 template<typename T, template<typename... Types> class Dict, typename... Types>
-    requires any_of<T, Types...>
+    requires detail::any_of<T, Types...>
 void add(std::vector<std::string> const& keys, T&& value, Dict<Types...>& dict)
 {
     auto&& node = get(keys, 0ul, dict);
@@ -363,7 +364,7 @@ void add(std::vector<std::string> const& keys, T&& value, Dict<Types...>& dict)
 }
 
 template<typename T, template<typename... Types> class Dict, typename... Types>
-    requires any_of<T, Types...>
+    requires detail::any_of<T, Types...>
 void add(std::string const& path, T&& value, Dict<Types...>& dict)
 {
     add(detail::split_string(path), std::forward<T>(value), dict);
