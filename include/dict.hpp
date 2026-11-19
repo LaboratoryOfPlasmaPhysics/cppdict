@@ -158,6 +158,13 @@ struct Dict
     }
 
 
+    // exact match for string literals: with only operator[](std::string const&), `dict["key"]`
+    // is ambiguous with the built-in `"key"[dict]` when Dict implicitly converts to
+    // std::ptrdiff_t (a long / std::int64_t leaf)
+    Dict& operator[](const char* key) { return (*this)[std::string{key}]; }
+    Dict& operator[](const char* key) const { return (*this)[std::string{key}]; }
+
+
     bool isLeaf() const noexcept { return !isNode() && !isEmpty(); }
 
     bool isNode() const noexcept { return std::holds_alternative<node_t>(data); }
