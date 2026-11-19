@@ -4,6 +4,8 @@
 #include <catch2/matchers/catch_matchers.hpp>
 
 #include "dict.hpp"
+
+#include <cstdint>
 using Dict = cppdict::Dict<int, double, std::string>;
 
 TEST_CASE("Can (deep)copy nodes with operator=", "[simple cppdict::Dict<int, double, std::string>]")
@@ -118,4 +120,17 @@ TEST_CASE("Can get_value key by delimiter  if exists", "or default if missing")
     Dict dict;
     dict["this"]["is"]["pi"] = 3.14;
     REQUIRE(cppdict::get_value(dict, "this/is/e", 2.71) == 2.71);
+}
+
+TEST_CASE("String literal keys with a long leaf", "[cppdict::Dict<std::int64_t, std::string>]")
+{
+    // std::int64_t is std::ptrdiff_t on LP64, with the implicit operator T&() conversion
+    // `dict["key"]` must not be ambiguous with the built-in `"key"[dict]`
+    cppdict::Dict<std::int64_t, std::string> dict;
+    dict["first"]                     = std::int64_t{1} << 40;
+    dict["second"]["third"]           = std::string{"hello"};
+    auto const& cdict                 = dict;
+    std::int64_t const first          = cdict["first"];
+    REQUIRE(first == std::int64_t{1} << 40);
+    REQUIRE(cdict["second"]["third"].to<std::string>() == "hello");
 }
